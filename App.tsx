@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import { UserSession, AppSettings } from './types';
+import Login from './components/Login.tsx';
+import Dashboard from './Dashboard.tsx';
+import { UserSession, AppSettings } from './types.ts';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<UserSession>({

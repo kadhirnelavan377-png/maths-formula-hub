@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
-import { MathExplanation, AppSettings } from './types';
-import { getMathExplanation } from './services/geminiService';
-import SettingsModal from './components/SettingsModal';
+import React, { useState, useEffect, useRef } from 'react';
+import { MathExplanation, AppSettings } from './types.ts';
+import { getMathExplanation } from './services/geminiService.ts';
+import SettingsModal from './components/SettingsModal.tsx';
 
 interface DashboardProps {
   userName: string;
@@ -17,6 +17,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, settings, onUpdateSetti
   const [error, setError] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCreator, setShowCreator] = useState(false);
+  const creatorRef = useRef<HTMLDivElement>(null);
 
   // Update CSS Variables based on theme
   useEffect(() => {
@@ -32,6 +34,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, settings, onUpdateSetti
     root.style.setProperty('--primary-mid', config.mid);
     root.style.setProperty('--primary-end', config.end);
   }, [settings.theme]);
+
+  // Close creator card when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (creatorRef.current && !creatorRef.current.contains(event.target as Node)) {
+        setShowCreator(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearch = async (e?: React.FormEvent, searchTopic?: string) => {
     if (e) e.preventDefault();
@@ -71,12 +84,56 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, settings, onUpdateSetti
           <div className="w-10 h-10 rounded-xl math-gradient flex items-center justify-center shadow-lg">
             <i className="fas fa-infinity text-white"></i>
           </div>
-          <span className="text-xl font-bold bg-clip-text text-transparent math-gradient">MathFormula AI</span>
+          <span className="text-xl font-bold bg-clip-text text-transparent math-gradient hidden sm:inline">Math Formula Hub</span>
         </div>
+
         <div className="flex items-center gap-4">
+          {/* Interactive Creator Button */}
+          <div className="relative" ref={creatorRef}>
+            <button 
+              onClick={() => setShowCreator(!showCreator)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all shadow-lg border ${
+                showCreator 
+                  ? 'bg-indigo-500 border-indigo-400 text-white' 
+                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${showCreator ? 'bg-white/20' : 'math-gradient'}`}>
+                <i className="fas fa-user-tie text-white"></i>
+              </div>
+              <span className="text-xs font-bold tracking-wide">Creator</span>
+            </button>
+
+            {/* Floating Creator Card */}
+            {showCreator && (
+              <div className="absolute top-full mt-3 right-0 w-64 glass rounded-3xl p-5 shadow-2xl border border-white/10 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-2xl math-gradient flex items-center justify-center text-3xl text-white mb-4 shadow-xl">
+                    <i className="fas fa-shield-halved"></i>
+                  </div>
+                  <h4 className="text-lg font-bold text-white mb-1">SR KADHIRNELAVAN</h4>
+                  <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-widest mb-3">Master Architect</p>
+                  <div className="w-full h-px bg-white/10 mb-3"></div>
+                  <p className="text-slate-400 text-xs italic">
+                    Creator of <span className="text-white font-semibold">GeoCommand App</span>
+                  </p>
+                  <div className="mt-4 flex gap-2">
+                     <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                       <i className="fab fa-github"></i>
+                     </div>
+                     <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                       <i className="fab fa-linkedin-in"></i>
+                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <button 
             onClick={() => setShowSettings(true)}
             className="w-10 h-10 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-indigo-500 transition-all flex items-center justify-center text-slate-300 hover:text-white"
+            title="System Controls"
           >
             <i className="fas fa-cog"></i>
           </button>
@@ -98,7 +155,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, settings, onUpdateSetti
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search e.g., 'Trigonometry', 'Volume of a Cone'..."
+            placeholder={`Search e.g., 'Trigonometry', 'Volume of a Cone' for Class ${settings.gradeLevel}...`}
             className="w-full px-8 py-5 rounded-2xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 text-lg shadow-2xl"
           />
           <button
@@ -264,7 +321,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, settings, onUpdateSetti
 
       <footer className="mt-auto w-full py-10 glass border-t-0 text-center">
         <p className="text-slate-500 text-sm">
-          &copy; 2024 MathFormula AI. Personalized for Grade {settings.gradeLevel}.
+          &copy; 2024 Math Formula Hub. Personalized for Grade {settings.gradeLevel}.
         </p>
       </footer>
     </div>

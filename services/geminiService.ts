@@ -1,9 +1,9 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { MathExplanation, AppSettings } from "../types";
+import { MathExplanation, AppSettings } from "../types.ts";
 
 export const getMathExplanation = async (topic: string, settings: AppSettings): Promise<MathExplanation> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const ai = new GoogleGenAI({ apiKey: (typeof process !== 'undefined' ? process.env.API_KEY : '') || '' });
   
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -71,5 +71,5 @@ export const getMathExplanation = async (topic: string, settings: AppSettings): 
     },
   });
 
-  return JSON.parse(response.text);
+  return JSON.parse(response.text || '{}');
 };
