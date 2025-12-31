@@ -2,6 +2,13 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { MathExplanation, AppSettings } from "../types.ts";
 
+export interface GradeSyllabus {
+  categories: {
+    name: string;
+    formulas: string[];
+  }[];
+}
+
 export const getMathExplanation = async (topic: string, settings: AppSettings): Promise<MathExplanation> => {
   const ai = new GoogleGenAI({ apiKey: (typeof process !== 'undefined' ? process.env.API_KEY : '') || '' });
   
@@ -72,4 +79,37 @@ export const getMathExplanation = async (topic: string, settings: AppSettings): 
   });
 
   return JSON.parse(response.text || '{}');
+};
+
+export const getGradeSyllabus = async (gradeLevel: number): Promise<GradeSyllabus> => {
+  const ai = new GoogleGenAI({ apiKey: (typeof process !== 'undefined' ? process.env.API_KEY : '') || '' });
+  
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: `List the major math chapters and formulas taught in Class ${gradeLevel}. Group them by category.`,
+    config: {
+      systemInstruction: `You are a curriculum expert. Provide a list of the most important formulas and topics for Grade ${gradeLevel}.
+      Return a JSON object with a "categories" array. Each category should have a "name" (e.g., Algebra, Geometry) and a "formulas" array of 5-8 strings representing key concepts or specific formulas.`,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          categories: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                formulas: { type: Type.ARRAY, items: { type: Type.STRING } }
+              },
+              required: ["name", "formulas"]
+            }
+          }
+        },
+        required: ["categories"]
+      }
+    }
+  });
+
+  return JSON.parse(response.text || '{"categories": []}');
 };
